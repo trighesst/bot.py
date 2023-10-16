@@ -2,23 +2,42 @@ import sqlite3
 import telebot  
 from telebot import types 
  
- 
- 
+conn = sqlite3.connect('accountant.db', check_same_thread=False)
+cursor = conn.cursor()
+
 bot = telebot.TeleBot('6128199622:AAHz4rI2bcPlw2sowf9EUfbiQCp1njNMLZM') 
- 
- 
+
+
+def db_table_val(user_id: int, user_name: str, user_surname: str, username: str):
+	cursor.execute('INSERT OR REPLACE INTO test (user_id, user_name, user_surname, username) VALUES (?, ?, ?, ?)', (user_id, user_name, user_surname, username))
+	conn.commit()
+
+
 @bot.message_handler(commands=['start']) 
 def start(message): 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True) 
     btn1 = types.KeyboardButton("Найти вакансию.") 
     btn2 = types.KeyboardButton("Создать вакансию.") 
     markup.add(btn1, btn2) 
-    bot.send_message(message.chat.id, 'Добро пожаловать, {0.first_name}! Я бот для создания ванкасий и для нахождения вакансий для подростков.'.format(message.from_user), reply_markup=markup) 
-     
+    bot.send_message(message.chat.id, 'Добро пожаловать, {0.first_name}! Я бот для создания ванкасий и для нахождения вакансий для подростков. Если ты еще не зарегестрирован, то нажми /register'.format(message.from_user), reply_markup=markup) 
+    
+
 @bot.message_handler(commands=['help']) 
 def help(message): 
-    bot.send_message(message.chat.id, 'Я бот-помощник. Я помогаю работодателям и людям, которые нуждаются в работе. Что бы начать введи команду /start') 
- 
+    bot.send_message(message.chat.id, 'Я бот-помощник. Я помогаю работодателям и людям, которые нуждаются в работе. Что бы начать введи команду /start , а чтобы зарегистироваться введи команду /register') 
+
+@bot.message_handler(commands=['register']) 
+def register(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True) 
+    btn1 = types.KeyboardButton("Зарегестрироваться!")
+    markup.add(btn1)
+    bot.send_message(message.chat.id, 'Добро пожаловать, {0.first_name}! Нажми на кнопку!'.format(message.from_user), reply_markup=markup)      
+      
+
+
+
+
+
 @bot.message_handler(content_types=['text']) 
 def funs(message): 
     if(message.text == "Найти вакансию."): 
@@ -205,9 +224,21 @@ def funs(message):
         btn2 = types.KeyboardButton("Создать вакансию.") 
         markup.add(btn1, btn2) 
         bot.send_message(message.chat.id, 'Добро пожаловать, {0.first_name}! Я бот для создания ванкасий и для нахождения вакансий для подростков.'.format(message.from_user), reply_markup=markup) 
-         
+      
  
- 
+@bot.message_handler(content_types=['text'])
+def get_text_messages(message):
+	if(message.text == "Зарегестрироваться!"): 
+		bot.send_message(message.chat.id, 'Привет! Ваше имя добавлено в базу данных! Нажмите /start')
+  
+		
+		
+	us_id = message.from_user.id
+	us_name = message.from_user.first_name
+	us_sname = message.from_user.last_name
+	username = message.from_user.username
+		
+	db_table_val(user_id=us_id, user_name=us_name, user_surname=us_sname, username=username)
  
  
 bot.polling(none_stop=True)
